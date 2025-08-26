@@ -22,7 +22,6 @@
 
         // URL에서 식물 ID를 추출하는 함수
         function getPlantIdFromUrl() {
-            // URL 경로에서 파일명(예: 'dayukei.html')을 가져온 후, '.html'을 제거합니다.
             const filename = window.location.pathname.split('/').pop();
             return filename.split('.')[0];
         }
@@ -41,14 +40,22 @@
                 const response = await fetch(SCRIPT_URL);
                 const allPlants = await response.json();
                 
-                // 해당 ID의 식물 데이터만 찾기
                 const plant = allPlants.find(p => p.ID === plantId);
                 
                 if (plant) {
+                    const rawDate = plant['마지막 물 준 날짜'];
+                    let formattedDate = '기록 없음';
+
+                    if (rawDate) {
+                        const dateOnly = rawDate.slice(0, 10);
+                        const parts = dateOnly.split('-'); // 예: ['2025', '08', '27']
+                        formattedDate = `${parts[0]}년 ${parseInt(parts[1])}월 ${parseInt(parts[2])}일`;
+                    }
+
                     container.innerHTML = `
                         <h2>${plant['식물 이름']}</h2>
                         <p>${plant['설명']}</p>
-                        <div class="water-info">마지막 물 준 날짜: <span>${plant['마지막 물 준 날짜'] || '기록 없음'}</span></div>
+                        <div class="water-info">마지막 물 준 날짜: <span>${formattedDate}</span></div>
                         <button class="water-button" onclick="waterPlant('${plant['ID']}')">물 주기 완료</button>
                     `;
                 } else {
@@ -72,7 +79,7 @@
 
                 if (result.success) {
                     alert('날짜가 성공적으로 업데이트되었습니다!');
-                    fetchPlantData(); // 업데이트 후 화면 갱신
+                    fetchPlantData();
                 } else {
                     alert('업데이트에 실패했습니다.');
                 }
@@ -82,7 +89,6 @@
             }
         }
         
-        // 페이지 로드 시 데이터 불러오기
         fetchPlantData();
     </script>
 </body>
