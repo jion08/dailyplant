@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>식물 관리</title>
+</head>
+<body>
+    <div id="plant-container" style="max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+        </div>
+
+    <script>
+        // 🚨여기에 Apps Script URL을 붙여넣으세요!
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxJr4RGPrtHJqPFqinJ8qvf7WzOWBmuyt4MJ5c1rhMidGv9iSocpHzMdJZkmQvPqpFC/exec';
+
+        // URL에서 식물 ID를 추출하는 함수
+        function getPlantIdFromUrl() {
+            // URL 경로에서 'dayukei' 또는 'guklakjo' 같은 부분을 가져옵니다.
+            const pathSegments = window.location.pathname.split('/').filter(Boolean);
+            return pathSegments[pathSegments.length - 1];
+        }
+
+        // Google Sheets에서 식물 데이터를 가져와서 해당 식물만 표시하는 함수
+        async function fetchPlantData() {
+            const plantId = getPlantIdFromUrl();
+            if (!plantId) {
+                // ID가 없으면 에러 처리
+                document.body.innerHTML = '<h1>식물 ID가 URL에 없습니다!</h1><p>예시: /dayukei 또는 /guklakjo</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const allPlants = await response.json();
+                
+                // 해당 ID의 식물 데이터만 찾기
+                const plant = allPlants.find(p => p.ID === plantId);
+                
+                if (plant) {
+                    const container = document.getElementById('plant-container');
+                    container.innerHTML = `
+                        <h1 style="color:#4CAF50; margin-top:0;">${plant['식물 이름']}</h1>
+                        <p>${plant['설명']}</p>
+                        <div style="font-weight: bold; color: #555;">마지막 물 준 날짜: <span>${plant['마지막 물 준 날짜'] || '기록 없음'}</span></div>
+                        <button onclick="waterPlant('${plant['ID']}')" style="background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px;">물 주기 완료</button>
+                    `;
+                } else {
+                    container.innerHTML = '<h1>해당 식물 정보를 찾을 수 없습니다.</h1>';
+                }
+
+            } catch (error) {
+                console.error('Error fetching plant data:', error);
+                alert('식물 데이터를 불러오는 데 실패했습니다.');
+            }
+        }
+
+        // 물 준 날짜를 Google Sheets에 업데이트하는 함수
+        async function waterPlant(plantId) {
+            const today = new Date().toISOString().slice(0, 10);
+            const params = new URLSearchParams({ id: plantId, date: today });
+            
+            try {
+                const response = await fetch(SCRIPT_URL + '?' + params.toString(), { method: 'POST' });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('날짜가 성공적으로 업데이트되었습니다!');
+                    fetchPlantData(); // 업데이트 후 화면 갱신
+                } else {
+                    alert('업데이트에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error updating plant:', error);
+                alert('업데이트 중 오류가 발생했습니다.');
+            }
+        }
+        
+        // 페이지 로드 시 데이터 불러오기
+        fetchPlantData();
+    </script>
+</body>
+</html>
