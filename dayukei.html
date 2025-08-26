@@ -3,9 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>식물 관리</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 20px auto; padding: 20px; }
+        .plant-card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { color: #4CAF50; text-align: center; }
+        h2 { color: #4CAF50; margin-top: 0; }
+        .water-info { font-weight: bold; color: #555; margin-top: 15px; }
+        .water-button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px; }
+    </style>
 </head>
 <body>
-    <div id="plant-container" style="max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+    <div id="plant-container">
         </div>
 
     <script>
@@ -14,17 +22,18 @@
 
         // URL에서 식물 ID를 추출하는 함수
         function getPlantIdFromUrl() {
-            // URL 경로에서 'dayukei' 또는 'guklakjo' 같은 부분을 가져옵니다.
-            const pathSegments = window.location.pathname.split('/').filter(Boolean);
-            return pathSegments[pathSegments.length - 1];
+            // URL 경로에서 파일명(예: 'dayukei.html')을 가져온 후, '.html'을 제거합니다.
+            const filename = window.location.pathname.split('/').pop();
+            return filename.split('.')[0];
         }
 
         // Google Sheets에서 식물 데이터를 가져와서 해당 식물만 표시하는 함수
         async function fetchPlantData() {
             const plantId = getPlantIdFromUrl();
+            const container = document.getElementById('plant-container');
+            
             if (!plantId) {
-                // ID가 없으면 에러 처리
-                document.body.innerHTML = '<h1>식물 ID가 URL에 없습니다!</h1><p>예시: /dayukei 또는 /guklakjo</p>';
+                container.innerHTML = '<h1 style="color:red;">식물 ID가 URL에 없습니다!</h1><p style="text-align:center;">예시: /dayukei.html</p>';
                 return;
             }
 
@@ -36,12 +45,11 @@
                 const plant = allPlants.find(p => p.ID === plantId);
                 
                 if (plant) {
-                    const container = document.getElementById('plant-container');
                     container.innerHTML = `
-                        <h1 style="color:#4CAF50; margin-top:0;">${plant['식물 이름']}</h1>
+                        <h2>${plant['식물 이름']}</h2>
                         <p>${plant['설명']}</p>
-                        <div style="font-weight: bold; color: #555;">마지막 물 준 날짜: <span>${plant['마지막 물 준 날짜'] || '기록 없음'}</span></div>
-                        <button onclick="waterPlant('${plant['ID']}')" style="background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px;">물 주기 완료</button>
+                        <div class="water-info">마지막 물 준 날짜: <span>${plant['마지막 물 준 날짜'] || '기록 없음'}</span></div>
+                        <button class="water-button" onclick="waterPlant('${plant['ID']}')">물 주기 완료</button>
                     `;
                 } else {
                     container.innerHTML = '<h1>해당 식물 정보를 찾을 수 없습니다.</h1>';
@@ -49,7 +57,7 @@
 
             } catch (error) {
                 console.error('Error fetching plant data:', error);
-                alert('식물 데이터를 불러오는 데 실패했습니다.');
+                container.innerHTML = '<h1>식물 데이터를 불러오는 데 실패했습니다.</h1><p>Apps Script URL이 올바른지 확인해주세요.</p>';
             }
         }
 
