@@ -9,6 +9,7 @@
         .plant-card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         h1 { color: #4CAF50; text-align: center; }
         h2 { color: #4CAF50; margin-top: 0; }
+        .plant-image { max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 15px; } /* 이미지 스타일 추가 */
         .water-info { font-weight: bold; color: #555; margin-top: 15px; }
         .water-button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px; }
     </style>
@@ -37,7 +38,6 @@
                 return;
             }
 
-            // **1. 로딩 중... 메시지 표시**
             container.innerHTML = '<h1 style="text-align:center;">로딩 중...</h1>';
 
             try {
@@ -46,7 +46,6 @@
                 
                 const plant = allPlants.find(p => p.ID === plantId);
                 
-                // **2. 데이터 로딩 성공 후 내용 표시**
                 if (plant) {
                     const rawDate = plant['마지막 물 준 날짜'];
                     let formattedDate = '기록 없음';
@@ -57,9 +56,13 @@
                         formattedDate = `${parts[0]}년 ${parseInt(parts[1])}월 ${parseInt(parts[2])}일`;
                     }
 
+                    // **사진 URL을 가져오고 이미지 태그를 추가하는 부분**
+                    const imageUrl = plant['사진 URL'];
+                    const imageHtml = imageUrl ? `<img src="${imageUrl}" alt="${plant['식물 이름']}" class="plant-image">` : '';
+
                     container.innerHTML = `
                         <h2>${plant['식물 이름']}</h2>
-                        <p>${plant['설명']}</p>
+                        ${imageHtml} <p>${plant['설명']}</p>
                         <div class="water-info">마지막 물 준 날짜: <span>${formattedDate}</span></div>
                         <button class="water-button" onclick="waterPlant('${plant['ID']}')">물 주기 완료</button>
                     `;
@@ -69,7 +72,6 @@
 
             } catch (error) {
                 console.error('Error fetching plant data:', error);
-                // **3. 오류 발생 시 메시지 표시**
                 container.innerHTML = '<h1>식물 데이터를 불러오는 데 실패했습니다.</h1><p>Apps Script URL이 올바른지 확인해주세요.</p>';
             }
         }
