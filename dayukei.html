@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>식물 관리</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 20px auto; padding: 20px; }
         .plant-card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -18,7 +19,7 @@
 
     <script>
         // 🚨여기에 Apps Script URL을 붙여넣으세요!
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxJr4RGPrtHJqPFqinJ8qvf7WzOWBmuyt4MJ5c1rhMidGv9iSocpHzMdJZkmQvPqpFC/exec';
+        const SCRIPT_URL = '여기에 복사한 Apps Script URL을 붙여넣으세요';
 
         // URL에서 식물 ID를 추출하는 함수
         function getPlantIdFromUrl() {
@@ -48,7 +49,7 @@
 
                     if (rawDate) {
                         const dateOnly = rawDate.slice(0, 10);
-                        const parts = dateOnly.split('-'); // 예: ['2025', '08', '27']
+                        const parts = dateOnly.split('-');
                         formattedDate = `${parts[0]}년 ${parseInt(parts[1])}월 ${parseInt(parts[2])}일`;
                     }
 
