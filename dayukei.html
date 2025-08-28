@@ -31,7 +31,7 @@
         async function fetchPlantData() {
             const plantId = getPlantIdFromUrl();
             const container = document.getElementById('plant-container');
-
+            
             if (!plantId) {
                 container.innerHTML = '<h1 style="color:red;">식물 ID가 URL에 없습니다!</h1><p style="text-align:center;">예시: /dayukei.html</p>';
                 return;
@@ -40,23 +40,27 @@
             container.innerHTML = '<h1 style="text-align:center;">로딩 중...</h1>';
 
             try {
-                const response = await fetch(SCRIPT_URL);
+                const cacheBuster = new Date().getTime();
+                const response = await fetch(`${SCRIPT_URL}?timestamp=${cacheBuster}`);
                 const allPlants = await response.json();
-
+                
                 const plant = allPlants.find(p => p.ID === plantId);
-
+                
                 if (plant) {
                     const rawDate = plant['마지막 물 준 날짜'];
                     let formattedDate = '기록 없음';
                     if (rawDate) {
-                        const dateOnly = rawDate.slice(0, 10);
-                        const parts = dateOnly.split('-');
-                        formattedDate = `${parts[0]}년 ${parseInt(parts[1])}월 ${parseInt(parts[2])}일`;
+                        // **이 부분이 수정되었습니다: 날짜를 정확하게 파싱하여 보여줍니다.**
+                        const dateObj = new Date(rawDate);
+                        const year = dateObj.getFullYear();
+                        const month = dateObj.getMonth() + 1;
+                        const day = dateObj.getDate();
+                        formattedDate = `${year}년 ${month}월 ${day}일`;
                     }
-
+                    
                     const imageUrl = plant['사진 URL'];
                     const imageHtml = imageUrl ? `<img src="${imageUrl}" alt="${plant['식물 이름']}" class="plant-image">` : '';
-
+                    
                     const comment = plant['코멘트'] || '';
                     const commentButtonText = comment ? '수정' : '등록';
 
@@ -84,9 +88,14 @@
         }
 
         async function waterPlant(plantId) {
-            const today = new Date().toISOString().slice(0, 10);
-            const params = new URLSearchParams({ id: plantId, date: today, action: 'water' }); // action 매개변수 추가
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const formattedDate = `${year}-${month}-${day}`;
 
+            const params = new URLSearchParams({ id: plantId, date: formattedDate, action: 'water' });
+            
             try {
                 const response = await fetch(SCRIPT_URL + '?' + params.toString(), { method: 'POST' });
                 const result = await response.json();
@@ -105,8 +114,8 @@
 
         async function saveComment(plantId) {
             const comment = document.getElementById('comment-input').value;
-            const params = new URLSearchParams({ id: plantId, comment: comment, action: 'comment' }); // action 매개변수 추가
-
+            const params = new URLSearchParams({ id: plantId, comment: comment, action: 'comment' });
+            
             try {
                 const response = await fetch(SCRIPT_URL + '?' + params.toString(), { method: 'POST' });
                 const result = await response.json();
@@ -122,7 +131,7 @@
                 alert('업데이트 중 오류가 발생했습니다.');
             }
         }
-
+        
         fetchPlantData();
     </script>
 </body>
