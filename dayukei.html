@@ -9,30 +9,29 @@
         .plant-card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         h1 { color: #4CAF50; text-align: center; }
         h2 { color: #4CAF50; margin-top: 0; }
-        .plant-image { max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 15px; } /* 이미지 스타일 추가 */
         .water-info { font-weight: bold; color: #555; margin-top: 15px; }
-        .water-button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px; }
+        .comment-area { margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; }
+        .comment-input { width: 100%; box-sizing: border-box; margin-top: 10px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .action-button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+        .action-button.comment { background-color: #337ab7; }
     </style>
 </head>
 <body>
     <div id="plant-container">
-        </div>
+    </div>
 
     <script>
-        // 🚨여기에 Apps Script URL을 붙여넣으세요!
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0p5YYgNeglrqPkEDMAB8aKMLEAj4KoC3GVGpVWFPIutduwK9l5wfLamy5uwzF_2Sg/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz9wowE54quWI7JsiUWN7EQ7wVyJhiKLdWIUbnXwCxgKG8nMt05d6VrCWRNWrRrzjbr/exec';
 
-        // URL에서 식물 ID를 추출하는 함수
         function getPlantIdFromUrl() {
             const filename = window.location.pathname.split('/').pop();
             return filename.split('.')[0];
         }
 
-        // Google Sheets에서 식물 데이터를 가져와서 해당 식물만 표시하는 함수
         async function fetchPlantData() {
             const plantId = getPlantIdFromUrl();
             const container = document.getElementById('plant-container');
-            
+
             if (!plantId) {
                 container.innerHTML = '<h1 style="color:red;">식물 ID가 URL에 없습니다!</h1><p style="text-align:center;">예시: /dayukei.html</p>';
                 return;
@@ -43,28 +42,36 @@
             try {
                 const response = await fetch(SCRIPT_URL);
                 const allPlants = await response.json();
-                
+
                 const plant = allPlants.find(p => p.ID === plantId);
-                
+
                 if (plant) {
                     const rawDate = plant['마지막 물 준 날짜'];
                     let formattedDate = '기록 없음';
-
                     if (rawDate) {
                         const dateOnly = rawDate.slice(0, 10);
                         const parts = dateOnly.split('-');
                         formattedDate = `${parts[0]}년 ${parseInt(parts[1])}월 ${parseInt(parts[2])}일`;
                     }
 
-                    // **사진 URL을 가져오고 이미지 태그를 추가하는 부분**
                     const imageUrl = plant['사진 URL'];
                     const imageHtml = imageUrl ? `<img src="${imageUrl}" alt="${plant['식물 이름']}" class="plant-image">` : '';
 
+                    const comment = plant['코멘트'] || '';
+                    const commentButtonText = comment ? '수정' : '등록';
+
                     container.innerHTML = `
                         <h2>${plant['식물 이름']}</h2>
-                        ${imageHtml} <p>${plant['설명']}</p>
+                        ${imageHtml} 
+                        <p>${plant['설명']}</p>
                         <div class="water-info">마지막 물 준 날짜: <span>${formattedDate}</span></div>
-                        <button class="water-button" onclick="waterPlant('${plant['ID']}')">물 주기 완료</button>
+                        <button class="action-button" onclick="waterPlant('${plant['ID']}')">물 주기 완료</button>
+
+                        <div class="comment-area">
+                            <div class="water-info">코멘트: <span>${comment}</span></div>
+                            <input type="text" id="comment-input" class="comment-input" placeholder="한 줄 코멘트를 남겨주세요." value="${comment}" />
+                            <button class="action-button comment" onclick="saveComment('${plant['ID']}')">${commentButtonText}</button>
+                        </div>
                     `;
                 } else {
                     container.innerHTML = '<h1>해당 식물 정보를 찾을 수 없습니다.</h1>';
@@ -76,11 +83,10 @@
             }
         }
 
-        // 물 준 날짜를 Google Sheets에 업데이트하는 함수
         async function waterPlant(plantId) {
             const today = new Date().toISOString().slice(0, 10);
-            const params = new URLSearchParams({ id: plantId, date: today });
-            
+            const params = new URLSearchParams({ id: plantId, date: today, action: 'water' }); // action 매개변수 추가
+
             try {
                 const response = await fetch(SCRIPT_URL + '?' + params.toString(), { method: 'POST' });
                 const result = await response.json();
@@ -96,7 +102,27 @@
                 alert('업데이트 중 오류가 발생했습니다.');
             }
         }
-        
+
+        async function saveComment(plantId) {
+            const comment = document.getElementById('comment-input').value;
+            const params = new URLSearchParams({ id: plantId, comment: comment, action: 'comment' }); // action 매개변수 추가
+
+            try {
+                const response = await fetch(SCRIPT_URL + '?' + params.toString(), { method: 'POST' });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('코멘트가 성공적으로 업데이트되었습니다!');
+                    fetchPlantData();
+                } else {
+                    alert('업데이트에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error updating comment:', error);
+                alert('업데이트 중 오류가 발생했습니다.');
+            }
+        }
+
         fetchPlantData();
     </script>
 </body>
