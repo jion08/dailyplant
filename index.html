@@ -1,1 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>나의 식물들</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 20px auto; padding: 20px; text-align: center; }
+        h1 { color: #4CAF50; }
+        .plant-list { margin-top: 30px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; }
+        .plant-card { width: 150px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; text-decoration: none; color: #333; transition: transform 0.2s; }
+        .plant-card:hover { transform: translateY(-5px); }
+        .plant-name { font-size: 1.2em; font-weight: bold; margin-bottom: 5px; }
+        .plant-image-thumb { max-width: 100%; height: auto; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>나의 식물 관리</h1>
+    <div id="plant-list-container">
+        </div>
 
+    <script>
+        const SCRIPT_URL = '여기에 복사한 Apps Script URL을 붙여넣으세요';
+
+        async function fetchAllPlants() {
+            const container = document.getElementById('plant-list-container');
+            container.innerHTML = '<h2>로딩 중...</h2>';
+
+            try {
+                const cacheBuster = new Date().getTime();
+                const response = await fetch(`${SCRIPT_URL}?timestamp=${cacheBuster}`);
+                const allPlants = await response.json();
+
+                if (allPlants.length > 0) {
+                    container.innerHTML = ''; // 로딩 메시지 제거
+                    const plantListDiv = document.createElement('div');
+                    plantListDiv.className = 'plant-list';
+
+                    allPlants.forEach(plant => {
+                        // ID가 없으면 건너뛰기
+                        if (!plant.ID) return;
+                        
+                        // 식물 카드(링크) 만들기
+                        const cardHtml = `
+                            <a href="${plant.ID}.html" class="plant-card">
+                                ${plant['사진 URL'] ? `<img src="${plant['사진 URL']}" alt="${plant['식물 이름']}" class="plant-image-thumb">` : ''}
+                                <div class="plant-name">${plant['식물 이름']}</div>
+                            </a>
+                        `;
+                        plantListDiv.innerHTML += cardHtml;
+                    });
+                    
+                    container.appendChild(plantListDiv);
+                } else {
+                    container.innerHTML = '<h2>등록된 식물이 없습니다.</h2>';
+                }
+
+            } catch (error) {
+                console.error('Error fetching plant data:', error);
+                container.innerHTML = '<h2>데이터를 불러오는 데 실패했습니다.</h2><p>Apps Script URL이 올바른지 확인해주세요.</p>';
+            }
+        }
+        
+        fetchAllPlants();
+    </script>
+</body>
+</html>
